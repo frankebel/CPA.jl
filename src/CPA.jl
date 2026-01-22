@@ -1,5 +1,8 @@
 module CPA
 
+using LinearAlgebra
+using RAS_DMFT
+
 export
     # types
     # functions
