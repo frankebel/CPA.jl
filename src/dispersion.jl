@@ -35,3 +35,7 @@ function dispersion_2d(ibz::IBZ; μ::Real = 0, t::Real = 1)
 end
 
 energy_2d(k::NTuple{2, <:Real}, t::Real = 1) = -2 * t * (cos(k[1]) + cos(k[2]))
+
+Base.eachindex(dispersion::Dispersion) = eachindex(dispersion.energy)
+
+Base.length(dispersion::Dispersion) = length(dispersion.energy)

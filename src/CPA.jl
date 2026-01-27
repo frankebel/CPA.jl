@@ -9,6 +9,7 @@ export
     cpa_loop,
     dispersion_2d,
     greens_function_local,
+    greens_function_local_resolvent,
     ibz_2d
 
 include("brillouin_zone.jl")
