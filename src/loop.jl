@@ -78,3 +78,71 @@ function cpa_loop(
     end
     return G_loc, Σ_new
 end
+
+"""
+    cpa_loop_resolvent(
+        dispersion::Dispersion,
+        grid::AbstractVector{Float64};
+        x::Real = 0.0,
+        ϵ::Real = 0.0,
+        Σ_H::Real = 0.0,
+        Σ::PolesSum{Float64, Float64} = PolesSum([0.0], [0.0]),
+        maxiter::Int = 100,
+    )
+
+Calculate the CPA loop in the resolvent formalism.
+"""
+function cpa_loop_resolvent(
+        dispersion::Dispersion,
+        grid::AbstractVector{Float64};
+        x::Real = 0.0,
+        ϵ::Real = 0.0,
+        Σ_H::Real = 0.0,
+        Σ::PolesSum{Float64, Float64} = PolesSum([0.0], [0.0]),
+        maxiter::Int = 100,
+    )
+    # local GF
+    G_loc = greens_function_local_resolvent(dispersion; Σ_H, Σ)
+    G_loc = to_grid(G_loc, grid)
+    @info "length G_loc $(length(G_loc))"
+    for it in 1:maxiter
+        @info "iteration $it"
+        # local GF
+        G_loc = greens_function_local_resolvent(dispersion; Σ_H, Σ)
+        G_loc = to_grid(G_loc, grid)
+        # impurity GF
+        a_0, G_loc_inv = inv(G_loc)
+        a_0 -= Σ_H
+        𝒢0_inv = G_loc_inv - Σ
+        merge_negative_weight!(𝒢0_inv)
+        merge_small_weight!(𝒢0_inv, eps())
+        # 𝒢0
+        foo = Array(𝒢0_inv)
+        foo[1, 1] = a_0
+        F = eigen!(foo)
+        wgt = F.vectors[1, :]
+        map!(abs2, wgt)
+        𝒢0 = PolesSum(F.values, wgt)
+        # resonant level model (RLM)
+        # G_loc = (1 - x) * 𝒢0 + x * (𝒢0^{-1} - ϵ)^{-1}
+        #       = P1           + P2
+        P1 = copy(𝒢0)
+        weights(P1) .*= 1 - x
+        foo = Array(𝒢0_inv)
+        foo[1, 1] = a_0 + ϵ
+        F = eigen!(foo)
+        wgt = F.vectors[1, :]
+        map!(abs2, wgt)
+        wgt .*= x
+        P2 = PolesSum(F.values, wgt)
+        G_loc = P1 + P2
+        # new self-energy
+        a_loc, G_loc_inv = inv(G_loc)
+        Σ_H = a_loc - a_0
+        Σ = G_loc_inv - 𝒢0_inv
+        merge_negative_weight!(Σ)
+        merge_small_weight!(Σ, eps())
+    end
+
+    return G_loc, Σ_H, Σ
+end

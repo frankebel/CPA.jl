@@ -7,6 +7,7 @@ export
     # types
     # functions
     cpa_loop,
+    cpa_loop_resolvent,
     dispersion_2d,
     greens_function_local,
     greens_function_local_resolvent,
