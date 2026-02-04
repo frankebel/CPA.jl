@@ -37,9 +37,9 @@ function cpa_loop(
         𝒢_inv = inv(G_loc) + Σ
         𝒢 = inv(𝒢_inv)
         # resonant level model
-        G00 = (1 - x) * 𝒢 + x * inv(𝒢_inv - ϵ)
+        G_loc = (1 - x) * 𝒢 + x * inv(𝒢_inv - ϵ)
         # new self-energy
-        Σ_new = 𝒢_inv - inv(G00)
+        Σ_new = 𝒢_inv - inv(G_loc)
         abs(Σ_new - Σ) < tol && break
         # new self-energy
         Σ = Σ_new
