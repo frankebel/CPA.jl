@@ -4,11 +4,11 @@
     cpa_loop(
         dispersion::Dispersion,
         ω::Float64 = 0.0;
-        δ::Real = 0.1,
-        x::Real = 0.0,
-        ϵ::Real = 0.0,
-        Σ::Number = 0.0im,
-        tol::Real = 0.1,
+        δ::Float64 = 0.1,
+        x::Float64 = 0.0,
+        ϵ::Float64 = 0.0,
+        Σ::ComplexF64 = 0.0im,
+        tol::Float64 = 0.1,
         maxiter::Int = 1000
     )
 
@@ -17,11 +17,11 @@ Calculate the CPA self-consistency loop for one frequency.
 function cpa_loop(
         dispersion::Dispersion,
         ω::Float64 = 0.0;
-        δ::Real = 0.1,
-        x::Real = 0.0,
-        ϵ::Real = 0.0,
-        Σ::Number = 0.0im,
-        tol::Real = 0.1,
+        δ::Float64 = 0.1,
+        x::Float64 = 0.0,
+        ϵ::Float64 = 0.0,
+        Σ::ComplexF64 = 0.0im,
+        tol::Float64 = 0.1,
         maxiter::Int = 1000
     )
     0.0 <= x <= 1.0 || throw(ArgumentError("x must be in [0, 1]"))
@@ -50,12 +50,12 @@ end
 """
     cpa_loop(
         dispersion::Dispersion,
-        W::AbstractVector;
-        δ::Real = 0.1,
-        x::Real = 0.0,
-        ϵ::Real = 0.0,
-        Σ::AbstractVector = zeros(ComplexF64, length(W)),
-        tol::Real = 0.1,
+        W::AbstractVector{Float64};
+        δ::Float64 = 0.1,
+        x::Float64 = 0.0,
+        ϵ::Float64 = 0.0,
+        Σ::Vector{ComplexF64} = zeros(ComplexF64, length(W)),
+        tol::Float64 = 0.1,
         maxiter::Int = 1000
     )
 
@@ -63,12 +63,12 @@ Calculate the CPA self-consistency loop for given frequency grid.
 """
 function cpa_loop(
         dispersion::Dispersion,
-        W::AbstractVector;
-        δ::Real = 0.1,
-        x::Real = 0.0,
-        ϵ::Real = 0.0,
-        Σ::AbstractVector = zeros(ComplexF64, length(W)),
-        tol::Real = 0.1,
+        W::AbstractVector{Float64};
+        δ::Float64 = 0.1,
+        x::Float64 = 0.0,
+        ϵ::Float64 = 0.0,
+        Σ::Vector{ComplexF64} = zeros(ComplexF64, length(W)),
+        tol::Float64 = 0.1,
         maxiter::Int = 1000
     )
     G_loc = similar(W, ComplexF64)
