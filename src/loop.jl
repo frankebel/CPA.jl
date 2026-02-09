@@ -71,6 +71,7 @@ function cpa_loop(
         tol::Float64 = 0.1,
         maxiter::Int = 1000
     )
+    length(W) == length(Σ) || throw(DimensionMismatch("length mismatch between W, Σ"))
     G_loc = similar(W, ComplexF64)
     Σ_new = similar(W, ComplexF64)
     Threads.@threads for i in eachindex(W)
@@ -141,7 +142,7 @@ function cpa_loop_resolvent(
         Σ_H = a_loc - a_0
         Σ = G_loc_inv - 𝒢0_inv
         merge_negative_weight!(Σ)
-        merge_small_weight!(Σ, eps())
+        merge_small_weight!(Σ, sqrt(eps()))
     end
 
     return G_loc, Σ_H, Σ

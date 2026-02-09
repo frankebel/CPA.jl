@@ -62,10 +62,6 @@ function greens_function_local_resolvent(
     Σ = remove_zero_weight(Σ)
 
     n = length(Σ) + 1
-    n_tot = length(dispersion) * n
-    loc_new = Vector{Float64}(undef, n_tot)
-    wgt_new = Vector{Float64}(undef, n_tot)
-    G_loc = PolesSum(loc_new, wgt_new)
 
     # Create tridiagonal matrix `T` using Householder transformations.
     # These do not touch the (1,1) element of the original matrix,
@@ -73,18 +69,46 @@ function greens_function_local_resolvent(
     h = hessenberg!(Array(Σ)) # don't give symmetric information on purpose
     T = SymTridiagonal(diag(h.H), diag(h.H, -1)) # diagonal and first lower diagonal
 
-    # Update the (1,1) element for each pole in Δ0 and diagonalize `T`.
-    # Threads.@threads for i in eachindex(dispersion)
-    for i in eachindex(dispersion)
-        idx_low = 1 + n * (i - 1)
-        idx_high = idx_low + n - 1
-        bar = copy(T)
-        bar[1, 1] = Σ_H + dispersion.energy[i]
-        loc_new[idx_low:idx_high], U = eigen!(bar)
-        U = h.Q * U # transform back
-        wgt_new[idx_low:idx_high] = dispersion.multiplicity[i] .* abs2.(view(U, 1, :)) # multiply new weights with multiplicity
+    # chunks for multithreading
+    chunk_size = max(1, length(dispersion) ÷ Threads.nthreads())
+    chunk_data = Iterators.partition(eachindex(dispersion.energy), chunk_size)
+
+    tasks = map(chunk_data) do chunk
+        Threads.@spawn begin
+            # allocate once
+            bar = copy(T)
+            baz = copy(h.Q)
+
+            # return data
+            loc = Float64[]
+            wgt = Float64[]
+
+            for i in chunk
+                copyto!(bar, T)
+                # Update the (1,1) element for each pole and diagonalize `T`.
+                bar[1, 1] = Σ_H + dispersion.energy[i]
+                Λ, U = eigen!(bar)
+                mul!(baz, h.Q, U) # transform back
+
+                # write into result
+                append!(loc, Λ)
+                v = baz[1, :]
+                @. v = abs2(v) * dispersion.multiplicity[i] # new weights scaled by original
+                append!(wgt, v)
+            end
+
+            return loc, wgt
+        end
     end
 
+    states = fetch.(tasks)
+
+    # merge to long vectors
+    loc_new = mapreduce(i -> i[1], vcat, states)
+    wgt_new = mapreduce(i -> i[2], vcat, states)
+    G_loc = PolesSum(loc_new, wgt_new)
+
+    # normalization
     N_k = sum(dispersion.multiplicity)
     wgt_new .*= inv(N_k)
     sort!(G_loc)
