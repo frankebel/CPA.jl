@@ -15,8 +15,9 @@ dispersion = dispersion_2d(ibz)
 
 # %%
 # non-interacting GF
-G0 = greens_function_local_resolvent(dispersion)
+G0 = PolesSum(dispersion)
 G0 = to_grid(G0, grid)
+merge_small_weight!(G0, sqrt(eps()))
 
 # %%
 # plot it

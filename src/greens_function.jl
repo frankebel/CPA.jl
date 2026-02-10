@@ -116,3 +116,29 @@ function greens_function_local_resolvent(
 
     return G_loc
 end
+
+"""
+    PolesSum(dispersion::Dispersion)
+
+Create a `PolesSum` instance from a given dispersion relation `dispersion`.
+"""
+function RAS_DMFT.PolesSum(dispersion::Dispersion)
+    loc = Vector{Float64}(undef, length(dispersion))
+    wgt = Vector{Float64}(undef, length(dispersion))
+    G = PolesSum(loc, wgt)
+
+    @inbounds for i in eachindex(dispersion)
+        loc[i] = dispersion.energy[i]
+        wgt[i] = dispersion.multiplicity[i]
+    end
+
+    # normalize
+    N_k = sum(dispersion.multiplicity)
+    wgt .*= inv(N_k)
+
+    # cleanup
+    sort!(G)
+    merge_degenerate_poles!(G, 10 * eps())
+
+    return G
+end
