@@ -55,7 +55,7 @@ function greens_function_local(
 end
 
 function greens_function_local_resolvent(
-        dispersion::Dispersion;
+        G0::PolesSum;
         Σ_H::Real = 0.0,
         Σ::PolesSum{Float64, Float64} = PolesSum([0.0], [0.0]),
     )
@@ -70,8 +70,8 @@ function greens_function_local_resolvent(
     T = SymTridiagonal(diag(h.H), diag(h.H, -1)) # diagonal and first lower diagonal
 
     # chunks for multithreading
-    chunk_size = max(1, length(dispersion) ÷ Threads.nthreads())
-    chunk_data = Iterators.partition(eachindex(dispersion.energy), chunk_size)
+    chunk_size = max(1, length(G0) ÷ Threads.nthreads())
+    chunk_data = Iterators.partition(eachindex(G0), chunk_size)
 
     tasks = map(chunk_data) do chunk
         Threads.@spawn begin
@@ -86,14 +86,14 @@ function greens_function_local_resolvent(
             for i in chunk
                 copyto!(bar, T)
                 # Update the (1,1) element for each pole and diagonalize `T`.
-                bar[1, 1] = Σ_H + dispersion.energy[i]
+                bar[1, 1] = Σ_H + locations(G0)[i]
                 Λ, U = eigen!(bar)
                 mul!(baz, h.Q, U) # transform back
 
                 # write into result
                 append!(loc, Λ)
                 v = baz[1, :]
-                @. v = abs2(v) * dispersion.multiplicity[i] # new weights scaled by original
+                map!(j -> abs2(j) * weight(G0, i), v) # new weights scaled by original
                 append!(wgt, v)
             end
 
@@ -107,10 +107,6 @@ function greens_function_local_resolvent(
     loc_new = mapreduce(i -> i[1], vcat, states)
     wgt_new = mapreduce(i -> i[2], vcat, states)
     G_loc = PolesSum(loc_new, wgt_new)
-
-    # normalization
-    N_k = sum(dispersion.multiplicity)
-    wgt_new .*= inv(N_k)
     sort!(G_loc)
     merge_degenerate_poles!(G_loc, eps())
 

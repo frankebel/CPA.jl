@@ -16,14 +16,15 @@ x = 0.5
 
 ibz = ibz_2d(n)
 dispersion = dispersion_2d(ibz; μ)
+G0 = PolesSum(dispersion)
 
 # %%
 # CPA
-
 maxiter = 100
-G_loc1, Σ_H1, Σ1 = cpa_loop_resolvent(dispersion, grid; x, ϵ, maxiter)
+G_loc1, Σ_H1, Σ1 = cpa_loop_resolvent(G0, grid; x, ϵ, maxiter)
 G_loc2, Σ2 = cpa_loop(dispersion, grid; x, ϵ, maxiter);
 
+# %%
 # plot it
 W = range(-10; stop = 10, length = 2001);
 σ = δ = 5.0e-2;
@@ -51,7 +52,6 @@ display(f)
 
 # %%
 # moments
-
 moment(G_loc1)
 moment(G_loc2, grid)
 moment(Σ1)

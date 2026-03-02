@@ -94,7 +94,7 @@ end
 Calculate the CPA loop in the resolvent formalism.
 """
 function cpa_loop_resolvent(
-        dispersion::Dispersion,
+        G0::PolesSum,
         grid::AbstractVector{Float64};
         x::Real = 0.0,
         ϵ::Real = 0.0,
@@ -103,13 +103,13 @@ function cpa_loop_resolvent(
         maxiter::Int = 100,
     )
     # local GF
-    G_loc = greens_function_local_resolvent(dispersion; Σ_H, Σ)
+    G_loc = greens_function_local_resolvent(G0; Σ_H, Σ)
     G_loc = to_grid(G_loc, grid)
     @info "length G_loc $(length(G_loc))"
     for it in 1:maxiter
         @info "iteration $it"
         # local GF
-        G_loc = greens_function_local_resolvent(dispersion; Σ_H, Σ)
+        G_loc = greens_function_local_resolvent(G0; Σ_H, Σ)
         G_loc = to_grid(G_loc, grid)
         # impurity GF
         a_0, G_loc_inv = inv(G_loc)
